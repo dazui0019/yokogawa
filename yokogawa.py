@@ -1,7 +1,11 @@
 import argparse
 import sys
 import time
-import tmctlLib
+# 尝试从 tmctl_lib 子目录导入，如果失败则尝试直接导入 (兼容旧结构)
+try:
+    from tmctl_lib import tmctlLib
+except ImportError:
+    import tmctlLib
 import os
 
 # --- 默认配置 ---
