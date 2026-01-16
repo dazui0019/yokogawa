@@ -1,45 +1,85 @@
 # Yokogawa 示波器控制工具
 
-这是一个基于 Python 的命令行工具，用于控制 Yokogawa (横河) DLM 系列示波器。该脚本依赖于官方提供的 `tmctlLib.py` 及相应的 DLL 库文件。
+这是一个基于 Python 的命令行工具，用于控制 Yokogawa (横河) DLM 系列示波器。本项目包含两个针对不同操作系统的脚本版本。
 
-## 功能特性
+## 脚本版本说明
 
-*   **多接口支持**：支持 USB (USBTMC) 和 网口 (VXI-11) 连接。
-*   **读取测量值**：快速读取指定通道的平均值 (Mean)，支持纯数值输出模式（便于脚本集成）。
-*   **屏幕截图**：一键获取当前示波器屏幕截图并保存为 PNG 文件。
-*   **自动控制**：在执行读取或截图时，自动处理示波器的暂停 (`STOP`) 和恢复 (`START`)，确保数据一致性。
+本项目提供两个版本的控制脚本，请根据您的操作系统选择使用：
 
-## 环境要求
+| 脚本文件 | 适用系统 | 依赖库 | 说明 |
+| :--- | :--- | :--- | :--- |
+| **`yokogawa.py`** | **Windows** | `tmctlLib`, `tmctl.dll` | 基于官方 DLL 开发，稳定支持 USBTMC 和 VXI-11。 |
+| **`yokogawa_pyvisa.py`** | **Linux** | `pyvisa`, `pyvisa-py`, `pyusb` | 基于 PyVISA 开发，适用于 Linux 环境 (如 Ubuntu, CentOS)。 |
+
+---
+
+## 1. Windows 版本 (`yokogawa.py`)
+
+### 环境要求
 
 *   **uv** (推荐的 Python 包与环境管理器)
-*   Python 3.x (由 uv 自动管理)
+*   Python 3.x
 *   `tmctlLib.py` (包含在项目目录中)
 *   `tmctl.dll` (32-bit) 或 `tmctl64.dll` (64-bit) (需与 Python 位数匹配，并放在脚本同级目录或系统路径下)
 *   Yokogawa USB 驱动 (如果使用 USB 连接)
 
-## 使用方法
+### 使用方法
 
-本项目使用 `uv` 进行环境管理和运行。请确保已安装 uv。
+**指定 USB 序列号**：
+如果不指定参数，默认使用内置的序列号。
+```bash
+uv run yokogawa.py --serial 90Y701585 mean
+```
 
-在终端或命令行中运行：
+**指定 IP 地址 (网口)**：
+```bash
+uv run yokogawa.py --ip 192.168.1.100 shot
+```
 
-### 全局连接参数
+---
 
-如果不指定连接参数，脚本默认使用代码中配置的默认 USB 序列号。
+## 2. Linux 版本 (`yokogawa_pyvisa.py`)
 
-*   **指定 USB 序列号**：
-    ```bash
-    uv run yokogawa.py --serial <序列号> [command]
-    # 示例
-    uv run yokogawa.py --serial 90Y701585 mean
-    ```
+### 环境要求
 
-*   **指定 IP 地址 (网口)**：
-    ```bash
-    uv run yokogawa.py --ip <IP地址> [command]
-    # 示例
-    uv run yokogawa.py --ip 192.168.1.100 shot
-    ```
+*   **uv** (推荐的 Python 包与环境管理器)
+*   Python 3.x
+*   依赖库：`pyvisa`, `pyvisa-py`, `pyusb`
+
+### USB 权限配置 (必须)
+
+Linux 默认不允许普通用户直接访问 USB 设备。你需要添加 udev 规则：
+
+1. 创建规则文件（例如 `/etc/udev/rules.d/99-yokogawa.rules`）：
+   ```bash
+   # Yokogawa USBTMC devices (Vendor ID 0x0B21)
+   SUBSYSTEM=="usb", ATTRS{idVendor}=="0b21", MODE="0666"
+   ```
+
+2. 重新加载规则并触发：
+   ```bash
+   sudo udevadm control --reload-rules && sudo udevadm trigger
+   ```
+
+### 使用方法
+
+命令格式与 Windows 版本基本一致，只是脚本文件名不同。
+
+**读取 Mean 值**:
+```bash
+uv run yokogawa_pyvisa.py mean -c 1
+```
+
+**截图**:
+```bash
+uv run yokogawa_pyvisa.py shot -o screen.png
+```
+
+---
+
+## 通用功能详解
+
+以下命令适用于两个版本的脚本。
 
 ### 1. 读取平均值 (mean)
 
@@ -47,23 +87,15 @@
 
 **语法**：
 ```bash
+# Windows
 uv run yokogawa.py mean [-c CHANNEL] [--clean]
+# Linux
+uv run yokogawa_pyvisa.py mean [-c CHANNEL] [--clean]
 ```
 
 **参数**：
 *   `-c, --channel`: 通道号 (1-4)，默认为 1。
-*   `--clean`: 干净模式。仅输出数值结果（保留两位小数）或 `NaN`/`Error`，不显示连接日志和其他提示信息。非常适合被其他脚本调用。
-
-**示例**：
-
-```bash
-# 读取通道 1 的值（带日志）
-uv run yokogawa.py mean -c 1
-
-# 仅获取通道 2 的数值（无日志）
-uv run yokogawa.py mean -c 2 --clean
-# 输出示例: 12.50
-```
+*   `--clean`: 干净模式。仅输出数值结果（保留两位小数）或 `NaN`/`Error`，不显示连接日志和其他提示信息。
 
 ### 2. 屏幕截图 (shot)
 
@@ -71,28 +103,22 @@ uv run yokogawa.py mean -c 2 --clean
 
 **语法**：
 ```bash
+# Windows
 uv run yokogawa.py shot [-o OUTPUT]
+# Linux
+uv run yokogawa_pyvisa.py shot [-o OUTPUT]
 ```
 
 **参数**：
 *   `-o, --output`: 指定保存的文件名。如果不指定，默认生成格式为 `DLM_YYYYMMDD_HHMMSS.png` 的文件。
 
-**示例**：
-
-```bash
-# 默认文件名截图
-uv run yokogawa.py shot
-
-# 指定文件名
-uv run yokogawa.py shot -o my_waveform.png
-```
-
 ## 常见问题
 
-*   **连接失败**：
-    *   检查 USB 线或网线是否连接正常。
-    *   检查示波器设置中的接口配置是否正确（USBTMC 或 VXI-11）。
-    *   确认 DLL 文件是否存在且与 Python 版本（32/64位）匹配。
-*   **截图 0KB 或 Timeout**：
-    *   截图数据量较大，脚本已内置较长的超时时间。如果仍然超时，请检查网络状况。
-    *   确保示波器未处于无法响应的死锁状态。
+*   **Linux 下找不到 USB 设备**:
+    *   请确保 `lsusb` 能看到设备（ID `0b21:xxxx`）。
+    *   检查 udev 权限设置是否生效。
+*   **VI_ERROR_NSUP_OPER (Linux)**:
+    *   如果在连接或截图时遇到此错误，通常是因为 `pyvisa-py` 对某些设备的 Clear 操作支持不完全。脚本已内置兼容处理，通常可以忽略或会自动重试。
+*   **连接失败 (Windows)**:
+    *   检查 DLL 文件是否存在且与 Python 版本匹配。
+    *   检查 USB 驱动是否安装。
