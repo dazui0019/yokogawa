@@ -11,14 +11,17 @@
 
 ## 环境要求
 
-*   Python 3.x
+*   **uv** (推荐的 Python 包与环境管理器)
+*   Python 3.x (由 uv 自动管理)
 *   `tmctlLib.py` (包含在项目目录中)
 *   `tmctl.dll` (32-bit) 或 `tmctl64.dll` (64-bit) (需与 Python 位数匹配，并放在脚本同级目录或系统路径下)
 *   Yokogawa USB 驱动 (如果使用 USB 连接)
 
 ## 使用方法
 
-在终端或命令行中运行 `python yokogawa.py`。
+本项目使用 `uv` 进行环境管理和运行。请确保已安装 uv。
+
+在终端或命令行中运行：
 
 ### 全局连接参数
 
@@ -26,16 +29,16 @@
 
 *   **指定 USB 序列号**：
     ```bash
-    python yokogawa.py --serial <序列号> [command]
+    uv run yokogawa.py --serial <序列号> [command]
     # 示例
-    python yokogawa.py --serial 90Y701585 mean
+    uv run yokogawa.py --serial 90Y701585 mean
     ```
 
 *   **指定 IP 地址 (网口)**：
     ```bash
-    python yokogawa.py --ip <IP地址> [command]
+    uv run yokogawa.py --ip <IP地址> [command]
     # 示例
-    python yokogawa.py --ip 192.168.1.100 shot
+    uv run yokogawa.py --ip 192.168.1.100 shot
     ```
 
 ### 1. 读取平均值 (mean)
@@ -44,7 +47,7 @@
 
 **语法**：
 ```bash
-python yokogawa.py mean [-c CHANNEL] [--clean]
+uv run yokogawa.py mean [-c CHANNEL] [--clean]
 ```
 
 **参数**：
@@ -55,10 +58,10 @@ python yokogawa.py mean [-c CHANNEL] [--clean]
 
 ```bash
 # 读取通道 1 的值（带日志）
-python yokogawa.py mean -c 1
+uv run yokogawa.py mean -c 1
 
 # 仅获取通道 2 的数值（无日志）
-python yokogawa.py mean -c 2 --clean
+uv run yokogawa.py mean -c 2 --clean
 # 输出示例: 12.50
 ```
 
@@ -68,7 +71,7 @@ python yokogawa.py mean -c 2 --clean
 
 **语法**：
 ```bash
-python yokogawa.py shot [-o OUTPUT]
+uv run yokogawa.py shot [-o OUTPUT]
 ```
 
 **参数**：
@@ -78,10 +81,10 @@ python yokogawa.py shot [-o OUTPUT]
 
 ```bash
 # 默认文件名截图
-python yokogawa.py shot
+uv run yokogawa.py shot
 
 # 指定文件名
-python yokogawa.py shot -o my_waveform.png
+uv run yokogawa.py shot -o my_waveform.png
 ```
 
 ## 常见问题
