@@ -85,17 +85,11 @@ class ScopeController:
             self.inst.timeout = 30000 # 30秒 (pyvisa 单位是 ms)
             
             # 清除状态
-            # 注意: pyvisa-py 后端对某些 USBTMC 设备执行 clear() (viClear) 可能会报 VI_ERROR_NSUP_OPER
+            # 横河设备不支持 clear() (viClear)，直接使用 *CLS
             try:
-                self.inst.clear()
-            except Exception as e:
-                # 忽略不支持的操作错误，尝试使用指令清除
-                if not quiet:
-                    print(f"Warning: 设备不支持 clear() 操作 ({e})，尝试使用 *CLS")
-                try:
-                    self.inst.write("*CLS")
-                except:
-                    pass
+                self.inst.write("*CLS")
+            except:
+                pass
             
             if not quiet:
                 print("连接成功!")
