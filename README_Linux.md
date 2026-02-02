@@ -62,14 +62,15 @@ uv run yokogawa_pyvisa.py [全局参数] <子命令> [子命令参数]
 读取指定通道的平均值 (Mean)。
 
 ```bash
-# 读取通道 1 (默认)
+# 默认模式：仅输出数值（推荐用于脚本集成）
 uv run yokogawa_pyvisa.py mean
+# 输出: 12.500
 
 # 读取通道 2
 uv run yokogawa_pyvisa.py mean -c 2
 
-# 干净输出模式 (仅输出数值，适合脚本调用)
-uv run yokogawa_pyvisa.py mean -c 1 --clean
+# 详细模式：显示连接日志和详细结果
+uv run yokogawa_pyvisa.py mean -c 1 -v
 ```
 
 #### 2. 屏幕截图 (shot)

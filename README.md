@@ -88,14 +88,32 @@ uv run yokogawa_pyvisa.py shot -o screen.png
 **语法**：
 ```bash
 # Windows
-uv run yokogawa.py mean [-c CHANNEL] [--clean]
+uv run yokogawa.py mean [-c CHANNEL] [-v/--verbose]
 # Linux
-uv run yokogawa_pyvisa.py mean [-c CHANNEL] [--clean]
+uv run yokogawa_pyvisa.py mean [-c CHANNEL] [-v/--verbose]
 ```
 
 **参数**：
 *   `-c, --channel`: 通道号 (1-4)，默认为 1。
-*   `--clean`: 干净模式。仅输出数值结果（保留两位小数）或 `NaN`/`Error`，不显示连接日志和其他提示信息。
+*   `-v, --verbose`: 详细输出模式。如果添加此参数，将显示连接日志、暂停/恢复提示以及完整的 "CHx Mean = ..." 格式结果。
+*   **(默认行为)**: 默认为干净模式，仅输出数值结果（保留三位小数）或 `NaN`/`Error`，不显示任何其他日志。
+
+**示例**：
+
+```bash
+# 默认模式：仅输出数值（推荐用于脚本集成）
+uv run yokogawa.py mean -c 1
+# 输出示例: 12.500
+
+# 详细模式：显示过程日志
+uv run yokogawa.py mean -c 2 -v
+# 输出示例:
+# ------------------------------
+# 连接方式: USBTMC (Serial: 90Y701585)
+# ...
+# [结果] CH2 Mean = 12.500
+# ...
+```
 
 ### 2. 屏幕截图 (shot)
 
