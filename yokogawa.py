@@ -120,9 +120,9 @@ class ScopeController:
             try:
                 val = float(val_str)
                 if is_clean:
-                    print(f"{val:.2f}")
+                    print(f"{val:.3f}")
                 else:
-                    print(f"\n[结果] CH{channel} Mean = {val:.2f}")
+                    print(f"\n[结果] CH{channel} Mean = {val:.3f}")
             except ValueError:
                 if is_clean:
                     print("NaN")
