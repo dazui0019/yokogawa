@@ -162,7 +162,8 @@ class ScopeController:
     def cmd_get_mean(self):
         """获取 Mean 值逻辑"""
         channel = self.args.channel
-        is_clean = self.args.clean
+        # 默认开启 clean 模式，除非指定了 --verbose
+        is_clean = not self.args.verbose
         
         if not is_clean:
             print(f"正在读取 Channel {channel} 的 Mean 值...")
@@ -329,7 +330,8 @@ def main():
     # 子命令: mean
     parser_mean = subparsers.add_parser("mean", help="读取指定通道的 Mean 值")
     parser_mean.add_argument("-c", "--channel", type=int, default=1, help="通道号 (1-4, 默认 1)")
-    parser_mean.add_argument("--clean", action="store_true", help="干净输出模式 (仅输出数值，保留两位小数)")
+    parser_mean.add_argument("-v", "--verbose", action="store_true", help="详细输出模式 (显示日志和完整信息)")
+    parser_mean.add_argument("--clean", action="store_true", help="[已废弃] 默认即为干净模式，保留此参数仅为兼容性")
     
     # 子命令: shot
     parser_shot = subparsers.add_parser("shot", help="获取屏幕截图")
@@ -346,7 +348,11 @@ def main():
         controller.cmd_list_devices()
         return
 
-    quiet_mode = hasattr(args, 'clean') and args.clean
+    # mean 命令默认 quiet (clean)，除非 verbose
+    # shot 命令默认 verbose (不 quiet)
+    quiet_mode = False
+    if args.command == 'mean':
+        quiet_mode = not args.verbose
     
     if controller.connect(quiet=quiet_mode):
         if args.command == "mean":
