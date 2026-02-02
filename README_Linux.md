@@ -6,15 +6,10 @@
 
 ### 安装 Python 依赖
 
-本项目基于 PyVISA 和 PyUSB 开发，无需官方专有驱动，但需要安装以下 Python 库：
+本项目使用`uv`工具来管理Python环境, 确保已安装`uv`工具, 并在项目根目录下执行以下命令来安装依赖:
 
 ```bash
-pip install pyvisa pyvisa-py pyusb
-```
-
-如果你使用 `uv` 管理项目：
-```bash
-uv add pyvisa pyvisa-py pyusb
+uv sync
 ```
 
 ## 2. 配置 USB 设备权限 (关键步骤)
@@ -57,7 +52,7 @@ sudo udevadm control --reload-rules && sudo udevadm trigger
 ### 基本语法
 
 ```bash
-python yokogawa_pyvisa.py [全局参数] <子命令> [子命令参数]
+uv run yokogawa_pyvisa.py [全局参数] <子命令> [子命令参数]
 ```
 
 ### 常用命令
@@ -68,13 +63,13 @@ python yokogawa_pyvisa.py [全局参数] <子命令> [子命令参数]
 
 ```bash
 # 读取通道 1 (默认)
-python yokogawa_pyvisa.py mean
+uv run yokogawa_pyvisa.py mean
 
 # 读取通道 2
-python yokogawa_pyvisa.py mean -c 2
+uv run yokogawa_pyvisa.py mean -c 2
 
 # 干净输出模式 (仅输出数值，适合脚本调用)
-python yokogawa_pyvisa.py mean -c 1 --clean
+uv run yokogawa_pyvisa.py mean -c 1 --clean
 ```
 
 #### 2. 屏幕截图 (shot)
@@ -83,10 +78,18 @@ python yokogawa_pyvisa.py mean -c 1 --clean
 
 ```bash
 # 默认保存为 DLM_年月日_时分秒.png
-python yokogawa_pyvisa.py shot
+uv run yokogawa_pyvisa.py shot
 
 # 指定文件名
-python yokogawa_pyvisa.py shot -o my_scope_screen.png
+uv run yokogawa_pyvisa.py shot -o my_scope_screen.png
+```
+
+#### 3. 列出可用设备 (list)
+
+列出系统当前识别到的所有 VISA 设备资源（包括 USB 和 TCPIP 设备）。这对于查找设备的序列号或资源字符串非常有用。
+
+```bash
+uv run yokogawa_pyvisa.py list
 ```
 
 ### 指定设备序列号
@@ -94,7 +97,7 @@ python yokogawa_pyvisa.py shot -o my_scope_screen.png
 如果有多个设备，或者脚本未能自动找到设备，可以通过 `--serial` 参数指定序列号。
 
 ```bash
-python yokogawa_pyvisa.py --serial 90Y701585 mean
+uv run yokogawa_pyvisa.py --serial 90Y701585 mean
 ```
 
 **提示**: 脚本会自动处理序列号的格式（包括部分驱动显示的 Hex 格式序列号），你只需要输入设备背面标签上的原始序列号即可。
