@@ -135,6 +135,30 @@ class ScopeController:
         except Exception as e:
             raise Exception(f"接收数据失败: '{cmd}' ({e})")
 
+    def cmd_list_devices(self):
+        """列出所有可用 VISA 设备"""
+        print("-" * 30)
+        print("正在搜索可用 VISA 设备...")
+        try:
+            resources = self.rm.list_resources()
+            if not resources:
+                print("未找到任何设备。")
+            else:
+                print(f"共找到 {len(resources)} 个设备:")
+                for i, res in enumerate(resources):
+                    print(f"  {i+1}. {res}")
+                    # 尝试获取设备 ID 信息
+                    try:
+                        with self.rm.open_resource(res) as temp_inst:
+                            temp_inst.timeout = 200  # 短超时
+                            idn = temp_inst.query("*IDN?")
+                            print(f"     -> {idn.strip()}")
+                    except:
+                        pass
+        except Exception as e:
+            print(f"搜索出错: {e}")
+        print("-" * 30)
+
     def cmd_get_mean(self):
         """获取 Mean 值逻辑"""
         channel = self.args.channel
@@ -310,11 +334,18 @@ def main():
     # 子命令: shot
     parser_shot = subparsers.add_parser("shot", help="获取屏幕截图")
     parser_shot.add_argument("-o", "--output", help="保存的文件名 (默认: 自动生成带时间戳的文件名)")
+
+    # 子命令: list
+    subparsers.add_parser("list", help="列出所有可用 VISA 设备")
     
     args = parser.parse_args()
     
     controller = ScopeController(args)
     
+    if args.command == "list":
+        controller.cmd_list_devices()
+        return
+
     quiet_mode = hasattr(args, 'clean') and args.clean
     
     if controller.connect(quiet=quiet_mode):
