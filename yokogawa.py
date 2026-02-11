@@ -119,11 +119,12 @@ class ScopeController:
             val_str = self.query(f":MEASure:CHANnel{channel}:AVERage:VALue?")
             
             try:
-                val = float(val_str)
+                # 转换为毫伏/毫安 (x1000)
+                val = float(val_str) * 1000.0
                 if is_clean:
                     print(f"{val:.3f}")
                 else:
-                    print(f"\n[结果] CH{channel} Mean = {val:.3f}")
+                    print(f"\n[结果] CH{channel} Mean = {val:.3f} (mUnit)")
             except ValueError:
                 if is_clean:
                     print("NaN")
