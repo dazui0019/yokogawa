@@ -73,6 +73,8 @@ uv run yokogawa_pyvisa.py mean -c 2
 uv run yokogawa_pyvisa.py mean -c 1 -v
 ```
 
+说明：`--channel` 仅支持 `1-4`，超出范围会直接报参数错误。
+
 #### 2. 屏幕截图 (shot)
 
 获取当前屏幕截图并保存为 PNG 文件。
@@ -85,6 +87,8 @@ uv run yokogawa_pyvisa.py shot
 uv run yokogawa_pyvisa.py shot -o my_scope_screen.png
 ```
 
+说明：`-o/--output` 支持包含目录路径，若目录不存在会自动创建。
+
 #### 3. 列出可用设备 (list)
 
 列出系统当前识别到的所有 VISA 设备资源（包括 USB 和 TCPIP 设备）。这对于查找设备的序列号或资源字符串非常有用。
@@ -92,6 +96,13 @@ uv run yokogawa_pyvisa.py shot -o my_scope_screen.png
 ```bash
 uv run yokogawa_pyvisa.py list
 ```
+
+#### 4. 退出码 (自动化集成)
+
+`mean` / `shot` 命令支持标准退出码，便于 CI 或上层脚本判断结果：
+
+* `0`: 命令执行成功。
+* `1`: 连接失败或命令执行失败。
 
 ### 指定设备序列号
 
