@@ -57,7 +57,24 @@ uv run yokogawa_pyvisa.py [全局参数] <子命令> [子命令参数]
 
 ### 常用命令
 
-#### 1. 读取平均值 (mean)
+#### 1. 通道开关与测量初始化 (channel)
+
+用于开启/关闭指定通道。`on` 时会同时初始化该通道的 Mean 测量状态。
+
+```bash
+# 开启 CH1 并初始化 Mean 测量
+uv run yokogawa_pyvisa.py channel on -c 1
+
+# 关闭 CH1
+uv run yokogawa_pyvisa.py channel off -c 1
+
+# 兼容旧用法（默认 on）
+uv run yokogawa_pyvisa.py channel-on -c 1
+```
+
+说明：`channel` 的状态参数为可选，默认 `on`；`--channel` 仅支持 `1-4`。
+
+#### 2. 读取平均值 (mean)
 
 读取指定通道的平均值 (Mean)。
 
@@ -74,8 +91,9 @@ uv run yokogawa_pyvisa.py mean -c 1 -v
 ```
 
 说明：`--channel` 仅支持 `1-4`，超出范围会直接报参数错误。
+说明：`mean` 只负责读取，不会自动开启通道或初始化测量。首次使用建议先执行 `channel on`。
 
-#### 2. 屏幕截图 (shot)
+#### 3. 屏幕截图 (shot)
 
 获取当前屏幕截图并保存为 PNG 文件。
 
@@ -89,7 +107,7 @@ uv run yokogawa_pyvisa.py shot -o my_scope_screen.png
 
 说明：`-o/--output` 支持包含目录路径，若目录不存在会自动创建。
 
-#### 3. 列出可用设备 (list)
+#### 4. 列出可用设备 (list)
 
 列出系统当前识别到的所有 VISA 设备资源（包括 USB 和 TCPIP 设备）。这对于查找设备的序列号或资源字符串非常有用。
 
@@ -97,9 +115,9 @@ uv run yokogawa_pyvisa.py shot -o my_scope_screen.png
 uv run yokogawa_pyvisa.py list
 ```
 
-#### 4. 退出码 (自动化集成)
+#### 5. 退出码 (自动化集成)
 
-`mean` / `shot` 命令支持标准退出码，便于 CI 或上层脚本判断结果：
+`channel` / `mean` / `shot` 命令支持标准退出码，便于 CI 或上层脚本判断结果：
 
 * `0`: 命令执行成功。
 * `1`: 连接失败或命令执行失败。

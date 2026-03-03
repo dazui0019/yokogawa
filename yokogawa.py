@@ -88,25 +88,12 @@ class ScopeController:
         # 默认开启 clean 模式，除非指定了 --verbose
         is_clean = not self.args.verbose
         success = False
-        stopped = False
-        printed_error = False
 
         if not is_clean:
             print(f"正在读取 Channel {channel} 的 Mean 值...")
 
         try:
-            # 1. 暂停示波器
-            if not is_clean:
-                print("暂停示波器采集...")
-            self.send(":STOP")
-            self.query("*OPC?")
-            stopped = True
-
             self.send(":COMMunicate:HEADer OFF")
-
-            # 开启测量
-            self.send(f":MEASure:CHANnel{channel}:AVERage:STATe ON")
-            self.send(":MEASure:MODE ON")
 
             # 查询结果
             val_str = self.query(f":MEASure:CHANnel{channel}:AVERage:VALue?")
@@ -131,21 +118,35 @@ class ScopeController:
             else:
                 # 干净模式下出错可能需要输出特定值或者空，这里输出 Error 便于脚本捕获
                 print("Error")
-                printed_error = True
-        finally:
-            if stopped:
-                if not is_clean:
-                    print("恢复示波器运行...")
-                try:
-                    self.send(":STARt")
-                except Exception as e:
-                    success = False
-                    if not is_clean:
-                        print(f"恢复运行失败: {e}")
-                    elif not printed_error:
-                        print("Error")
 
         return success
+
+    def cmd_channel_set(self):
+        """设置通道开关状态；开启时初始化 Mean 测量"""
+        channel = self.args.channel
+        state = self.args.state
+
+        try:
+            self.send(":COMMunicate:HEADer OFF")
+
+            if state == "on":
+                print(f"正在开启 Channel {channel} 并初始化 Mean 测量...")
+                self.send(f":CHANnel{channel}:DISPlay ON")
+                self.send(f":MEASure:CHANnel{channel}:AVERage:STATe ON")
+                self.send(":MEASure:MODE ON")
+                self.query("*OPC?")
+                print(f"Channel {channel} 已开启，Mean 测量已初始化。")
+            else:
+                print(f"正在关闭 Channel {channel} ...")
+                self.send(f":MEASure:CHANnel{channel}:AVERage:STATe OFF")
+                self.send(f":CHANnel{channel}:DISPlay OFF")
+                self.query("*OPC?")
+                print(f"Channel {channel} 已关闭。")
+
+            return True
+        except Exception as e:
+            print(f"通道状态设置失败: {e}")
+            return False
 
     def cmd_get_screenshot(self):
         """截图逻辑"""
@@ -263,6 +264,11 @@ def main():
     parser_mean.add_argument("-v", "--verbose", action="store_true", help="详细输出模式 (显示日志和完整信息)")
     parser_mean.add_argument("--clean", action="store_true", help="[已废弃] 默认即为干净模式，保留此参数仅为兼容性")
 
+    # 子命令: channel (通道开关，兼容 channel-on 别名)
+    parser_channel = subparsers.add_parser("channel", aliases=["channel-on"], help="设置通道开关状态；on 时初始化 Mean 测量")
+    parser_channel.add_argument("state", nargs="?", default="on", choices=["on", "off"], help="通道状态: on 开启, off 关闭 (默认: on)")
+    parser_channel.add_argument("-c", "--channel", type=int, choices=[1, 2, 3, 4], default=1, help="通道号 (1-4, 默认 1)")
+
     # 子命令: shot (截图)
     parser_shot = subparsers.add_parser("shot", help="获取屏幕截图")
     parser_shot.add_argument("-o", "--output", help="保存的文件名 (默认: 自动生成带时间戳的文件名)")
@@ -290,6 +296,8 @@ def main():
     try:
         if args.command == "mean":
             op_ok = controller.cmd_get_mean()
+        elif args.command in ("channel", "channel-on"):
+            op_ok = controller.cmd_channel_set()
         elif args.command == "shot":
             op_ok = controller.cmd_get_screenshot()
     finally:
