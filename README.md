@@ -70,6 +70,11 @@ Linux 默认不允许普通用户直接访问 USB 设备。你需要添加 udev 
 uv run yokogawa_pyvisa.py mean -c 1
 ```
 
+**读取 RMS 值**:
+```bash
+uv run yokogawa_pyvisa.py rms -c 1
+```
+
 **截图**:
 ```bash
 uv run yokogawa_pyvisa.py shot -o screen.png
@@ -141,7 +146,37 @@ uv run yokogawa.py mean -c 1
 uv run yokogawa.py mean -c 2 -v
 ```
 
-### 3. Screenshot (shot)
+### 3. Read RMS value (rms)
+
+Reads the current RMS measurement value for the selected channel.
+
+**Syntax**:
+```bash
+# Windows
+uv run yokogawa.py rms [-c CHANNEL] [-v/--verbose]
+# Linux
+uv run yokogawa_pyvisa.py rms [-c CHANNEL] [-v/--verbose]
+```
+
+**Arguments**:
+*   `-c, --channel`: channel number 1-4; default is 1. Out-of-range values fail fast.
+*   `-v, --verbose`: print connection logs and the full `CHx RMS = ...` style output.
+*   Default behavior: clean mode. Only prints the numeric result (3 decimal places, in **mA** or **mV**) or `NaN`/`Error`.
+*   Note: `rms` only reads the current value. It does not enable a channel or initialize RMS automatically. If RMS is not configured yet, enable it on the front panel first.
+
+**Examples**:
+```bash
+# If RMS is not configured yet, enable it on the front panel first
+
+# Clean mode: output numeric value only
+uv run yokogawa.py rms -c 1
+# Example output: 8838.835
+
+# Verbose mode: show connection logs and formatted result
+uv run yokogawa.py rms -c 2 -v
+```
+
+### 4. Screenshot (shot)
 
 
 获取当前示波器屏幕画面并保存为 PNG 图片。执行过程中会自动暂停示波器，截图完成后恢复运行。
@@ -157,9 +192,9 @@ uv run yokogawa_pyvisa.py shot [-o OUTPUT]
 **参数**：
 *   `-o, --output`: 指定保存的文件名。如果不指定，默认生成格式为 `DLM_YYYYMMDD_HHMMSS.png` 的文件。支持包含目录路径，若目录不存在会自动创建。
 
-### 4. 退出码 (自动化集成)
+### 5. 退出码 (自动化集成)
 
-`channel` / `mean` / `shot` 命令支持标准退出码，便于 CI 或上层脚本判断结果：
+`channel` / `mean` / `rms` / `shot` 命令支持标准退出码，便于 CI 或上层脚本判断结果：
 
 *   `0`: 命令执行成功。
 *   `1`: 连接失败或命令执行失败。

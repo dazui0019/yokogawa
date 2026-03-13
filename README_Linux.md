@@ -96,7 +96,26 @@ uv run yokogawa_pyvisa.py mean -c 1 -v
 Notes: `--channel` only supports `1-4`; out-of-range values fail fast.
 Note: `mean` only reads the current value. It does not enable a channel or initialize Mean automatically. If Mean is not configured yet, enable it on the front panel first.
 
-#### 3. Screenshot (shot)
+#### 3. Read RMS value (rms)
+
+Reads the current RMS value for the selected channel.
+
+```bash
+# Clean mode: output numeric value only
+uv run yokogawa_pyvisa.py rms
+# Example output: 8.839
+
+# Read channel 2
+uv run yokogawa_pyvisa.py rms -c 2
+
+# Verbose mode: show connection logs and formatted result
+uv run yokogawa_pyvisa.py rms -c 1 -v
+```
+
+Notes: `--channel` only supports `1-4`; out-of-range values fail fast.
+Note: `rms` only reads the current value. It does not enable a channel or initialize RMS automatically. If RMS is not configured yet, enable it on the front panel first.
+
+#### 4. Screenshot (shot)
 
 获取当前屏幕截图并保存为 PNG 文件。
 
@@ -110,7 +129,7 @@ uv run yokogawa_pyvisa.py shot -o my_scope_screen.png
 
 说明：`-o/--output` 支持包含目录路径，若目录不存在会自动创建。
 
-#### 4. 列出可用设备 (list)
+#### 5. 列出可用设备 (list)
 
 列出系统当前识别到的所有 VISA 设备资源（包括 USB 和 TCPIP 设备）。这对于查找设备的序列号或资源字符串非常有用。
 
@@ -118,9 +137,9 @@ uv run yokogawa_pyvisa.py shot -o my_scope_screen.png
 uv run yokogawa_pyvisa.py list
 ```
 
-#### 5. 退出码 (自动化集成)
+#### 6. 退出码 (自动化集成)
 
-`channel` / `mean` / `shot` 命令支持标准退出码，便于 CI 或上层脚本判断结果：
+`channel` / `mean` / `rms` / `shot` 命令支持标准退出码，便于 CI 或上层脚本判断结果：
 
 * `0`: 命令执行成功。
 * `1`: 连接失败或命令执行失败。

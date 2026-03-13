@@ -198,21 +198,21 @@ class ScopeController:
             print(f"搜索出错: {e}")
         print("-" * 30)
 
-    def cmd_get_mean(self):
-        """获取 Mean 值逻辑"""
+    def _cmd_get_measurement(self, measurement_name, scpi_parameter):
+        """获取标量测量值逻辑"""
         channel = self.args.channel
         # 默认开启 clean 模式，除非指定了 --verbose
         is_clean = not self.args.verbose
         success = False
 
         if not is_clean:
-            print(f"正在读取 Channel {channel} 的 Mean 值...")
+            print(f"正在读取 Channel {channel} 的 {measurement_name} 值...")
 
         try:
             self.send(":COMMunicate:HEADer OFF")
 
             # 查询结果
-            val_str = self.query(f":MEASure:CHANnel{channel}:AVERage:VALue?")
+            val_str = self.query(f":MEASure:CHANnel{channel}:{scpi_parameter}:VALue?")
 
             try:
                 # 转换为毫伏/毫安 (x1000)
@@ -220,12 +220,12 @@ class ScopeController:
                 if is_clean:
                     print(f"{val:.3f}")
                 else:
-                    print(f"\n[结果] CH{channel} Mean = {val:.3f} (mUnit)")
+                    print(f"\n[结果] CH{channel} {measurement_name} = {val:.3f} (mUnit)")
             except ValueError:
                 if is_clean:
                     print("NaN")
                 else:
-                    print(f"\n[结果] CH{channel} Mean = {val_str} (非数值)")
+                    print(f"\n[结果] CH{channel} {measurement_name} = {val_str} (非数值)")
             success = True
 
         except Exception as e:
@@ -235,6 +235,14 @@ class ScopeController:
                 print("Error")
 
         return success
+
+    def cmd_get_mean(self):
+        """获取 Mean 值逻辑"""
+        return self._cmd_get_measurement("Mean", "AVERage")
+
+    def cmd_get_rms(self):
+        """获取 RMS 值逻辑"""
+        return self._cmd_get_measurement("RMS", "RMS")
 
     def cmd_channel_set(self):
         """Set channel display state."""
@@ -401,6 +409,12 @@ def main():
     parser_mean.add_argument("-v", "--verbose", action="store_true", help="详细输出模式 (显示日志和完整信息)")
     parser_mean.add_argument("--clean", action="store_true", help="[已废弃] 默认即为干净模式，保留此参数仅为兼容性")
 
+    # 子命令: rms
+    parser_rms = subparsers.add_parser("rms", help="读取指定通道的 RMS 值")
+    parser_rms.add_argument("-c", "--channel", type=int, choices=[1, 2, 3, 4], default=1, help="通道号 (1-4, 默认 1)")
+    parser_rms.add_argument("-v", "--verbose", action="store_true", help="详细输出模式 (显示日志和完整信息)")
+    parser_rms.add_argument("--clean", action="store_true", help="[已废弃] 默认即为干净模式，保留此参数仅为兼容性")
+
     # 子命令: channel (通道开关，兼容 channel-on 别名)
     parser_channel = subparsers.add_parser("channel", aliases=["channel-on"], help="Set channel display on/off (panel-like by default)")
     parser_channel.add_argument("state", nargs="?", default="on", choices=["on", "off"], help="通道状态: on 开启, off 关闭 (默认: on)")
@@ -436,14 +450,14 @@ def main():
         controller.cmd_list_devices()
         return 0
 
-    # mean 命令默认 quiet (clean)，除非 verbose
+    # mean/rms 命令默认 quiet (clean)，除非 verbose
     # shot 命令默认 verbose (不 quiet)
     quiet_mode = False
-    if args.command == "mean":
+    if args.command in ("mean", "rms"):
         quiet_mode = not args.verbose
 
     if not controller.connect(quiet=quiet_mode):
-        if args.command == "mean" and quiet_mode:
+        if args.command in ("mean", "rms") and quiet_mode:
             print("Error")
         else:
             print("连接失败。")
@@ -453,6 +467,8 @@ def main():
     try:
         if args.command == "mean":
             op_ok = controller.cmd_get_mean()
+        elif args.command == "rms":
+            op_ok = controller.cmd_get_rms()
         elif args.command in ("channel", "channel-on"):
             op_ok = controller.cmd_channel_set()
         elif args.command == "shot":
