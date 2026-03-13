@@ -68,11 +68,14 @@ uv run yokogawa_pyvisa.py channel on -c 1
 # Turn off CH1, CH2, and CH4 displays together
 uv run yokogawa_pyvisa.py channel off -c 1 2 4
 
+# Turn off all channel displays together
+uv run yokogawa_pyvisa.py channel off --all
+
 # Alias (defaults to on)
 uv run yokogawa_pyvisa.py channel-on -c 1
 ```
 
-Notes: `channel` defaults to `on`; `--channel` only supports `1-4` and also accepts multiple values such as `-c 1 2` or `-c 1,2,4`; the behavior is display-only.
+Notes: `channel` defaults to `on`; `--channel` only supports `1-4` and also accepts multiple values such as `-c 1 2` or `-c 1,2,4`; `--all` selects CH1-CH4 and is mutually exclusive with `--channel`; the behavior is display-only.
 
 #### 2. Read Mean value (mean)
 

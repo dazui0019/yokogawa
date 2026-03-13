@@ -12,6 +12,7 @@ except ImportError:
 # --- 默认配置 ---
 # 如果不输入参数，默认使用的 USB 序列号
 DEFAULT_USB_SERIAL = "90Y701585"
+ALL_CHANNELS = [1, 2, 3, 4]
 
 
 def _dedupe_channels(channels):
@@ -35,7 +36,7 @@ def _parse_channel_values(values):
             except ValueError as exc:
                 raise ValueError(f"无效通道: {part}") from exc
 
-            if channel not in (1, 2, 3, 4):
+            if channel not in ALL_CHANNELS:
                 raise ValueError(f"通道号超出范围: {channel} (仅支持 1-4)")
 
             channels.append(channel)
@@ -163,7 +164,7 @@ class ScopeController:
 
     def cmd_channel_set(self):
         """Set channel display state."""
-        channels = self.args.channel or [1]
+        channels = ALL_CHANNELS if self.args.all_channels else (self.args.channel or [1])
         state = self.args.state
 
         try:
@@ -307,13 +308,21 @@ def main():
     # 子命令: channel (通道开关，兼容 channel-on 别名)
     parser_channel = subparsers.add_parser("channel", aliases=["channel-on"], help="Set channel display on/off (panel-like by default)")
     parser_channel.add_argument("state", nargs="?", default="on", choices=["on", "off"], help="通道状态: on 开启, off 关闭 (默认: on)")
-    parser_channel.add_argument(
+    channel_target_group = parser_channel.add_mutually_exclusive_group()
+    channel_target_group.add_argument(
         "-c",
         "--channel",
         nargs="+",
         action=ChannelListAction,
         default=None,
         help="Channel number(s) (1-4, default: 1). Supports multiple values, e.g. -c 1 2 or -c 1,2,4",
+    )
+    channel_target_group.add_argument(
+        "-a",
+        "--all",
+        dest="all_channels",
+        action="store_true",
+        help="选择所有通道 (CH1-CH4)",
     )
 
     # 子命令: shot (截图)

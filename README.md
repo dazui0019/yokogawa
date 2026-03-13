@@ -88,14 +88,15 @@ Turns selected channel displays on or off. The default behavior matches the fron
 **Syntax**:
 ```bash
 # Windows
-uv run yokogawa.py channel [on|off] [-c CHANNEL [CHANNEL ...]]
+uv run yokogawa.py channel [on|off] [-c CHANNEL [CHANNEL ...] | -a]
 # Linux
-uv run yokogawa_pyvisa.py channel [on|off] [-c CHANNEL [CHANNEL ...]]
+uv run yokogawa_pyvisa.py channel [on|off] [-c CHANNEL [CHANNEL ...] | -a]
 ```
 
 **Arguments**:
 *   `on|off`: channel state, defaults to `on`.
 *   `-c, --channel`: channel number(s) 1-4; default is 1. Supports multiple values, e.g. `-c 1 2` or `-c 1,2,4`.
+*   `-a, --all`: select all channels (CH1-CH4). Mutually exclusive with `-c/--channel`.
 *   Alias: `channel-on` (same as `channel on`).
 
 **Examples**:
@@ -105,6 +106,9 @@ uv run yokogawa.py channel on -c 1
 
 # Turn off CH1, CH2, and CH4 displays together
 uv run yokogawa.py channel off -c 1 2 4
+
+# Turn on all channel displays together
+uv run yokogawa.py channel on --all
 ```
 
 ### 2. Read Mean value (mean)
