@@ -57,43 +57,43 @@ uv run yokogawa_pyvisa.py [全局参数] <子命令> [子命令参数]
 
 ### 常用命令
 
-#### 1. 通道开关与测量初始化 (channel)
+#### 1. Channel display toggle (channel)
 
-用于开启/关闭指定通道。`on` 时会同时初始化该通道的 Mean 测量状态。
+Turns selected channel displays on or off. The default behavior matches the front-panel channel keys: it only toggles display state and does not change Mean measurement configuration.
 
 ```bash
-# 开启 CH1 并初始化 Mean 测量
+# Panel-like: only turn on CH1 display
 uv run yokogawa_pyvisa.py channel on -c 1
 
-# 关闭 CH1
-uv run yokogawa_pyvisa.py channel off -c 1
+# Turn off CH1, CH2, and CH4 displays together
+uv run yokogawa_pyvisa.py channel off -c 1 2 4
 
-# 兼容旧用法（默认 on）
+# Alias (defaults to on)
 uv run yokogawa_pyvisa.py channel-on -c 1
 ```
 
-说明：`channel` 的状态参数为可选，默认 `on`；`--channel` 仅支持 `1-4`。
+Notes: `channel` defaults to `on`; `--channel` only supports `1-4` and also accepts multiple values such as `-c 1 2` or `-c 1,2,4`; the behavior is display-only.
 
-#### 2. 读取平均值 (mean)
+#### 2. Read Mean value (mean)
 
-读取指定通道的平均值 (Mean)。
+Reads the current Mean value for the selected channel.
 
 ```bash
-# 默认模式：仅输出数值（推荐用于脚本集成）
+# Clean mode: output numeric value only
 uv run yokogawa_pyvisa.py mean
-# 输出: 12.500
+# Example output: 12.500
 
-# 读取通道 2
+# Read channel 2
 uv run yokogawa_pyvisa.py mean -c 2
 
-# 详细模式：显示连接日志和详细结果
+# Verbose mode: show connection logs and formatted result
 uv run yokogawa_pyvisa.py mean -c 1 -v
 ```
 
-说明：`--channel` 仅支持 `1-4`，超出范围会直接报参数错误。
-说明：`mean` 只负责读取，不会自动开启通道或初始化测量。首次使用建议先执行 `channel on`。
+Notes: `--channel` only supports `1-4`; out-of-range values fail fast.
+Note: `mean` only reads the current value. It does not enable a channel or initialize Mean automatically. If Mean is not configured yet, enable it on the front panel first.
 
-#### 3. 屏幕截图 (shot)
+#### 3. Screenshot (shot)
 
 获取当前屏幕截图并保存为 PNG 文件。
 

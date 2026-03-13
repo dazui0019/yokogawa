@@ -81,40 +81,37 @@ uv run yokogawa_pyvisa.py shot -o screen.png
 
 以下命令适用于两个版本的脚本。
 
-### 1. 通道开关与测量初始化 (channel)
+### 1. Channel display toggle (channel)
 
-用于开启/关闭指定通道。`on` 时会同时初始化该通道的 Mean 测量状态。
+Turns selected channel displays on or off. The default behavior matches the front-panel channel keys: it only toggles display state and does not change Mean measurement configuration.
 
-**语法**：
+**Syntax**:
 ```bash
 # Windows
-uv run yokogawa.py channel [on|off] [-c CHANNEL]
+uv run yokogawa.py channel [on|off] [-c CHANNEL [CHANNEL ...]]
 # Linux
-uv run yokogawa_pyvisa.py channel [on|off] [-c CHANNEL]
+uv run yokogawa_pyvisa.py channel [on|off] [-c CHANNEL [CHANNEL ...]]
 ```
 
-**参数**：
-*   `on|off`: 通道状态，默认 `on`。
-*   `-c, --channel`: 通道号 (1-4)，默认为 1。
-*   兼容别名：`channel-on`（等价于 `channel on`）。
+**Arguments**:
+*   `on|off`: channel state, defaults to `on`.
+*   `-c, --channel`: channel number(s) 1-4; default is 1. Supports multiple values, e.g. `-c 1 2` or `-c 1,2,4`.
+*   Alias: `channel-on` (same as `channel on`).
 
-**示例**：
+**Examples**:
 ```bash
-# 开启 CH1 并初始化 Mean 测量
+# Panel-like: only turn on CH1 display
 uv run yokogawa.py channel on -c 1
 
-# 关闭 CH1
-uv run yokogawa.py channel off -c 1
-
-# 兼容旧用法（默认 on）
-uv run yokogawa.py channel-on -c 1
+# Turn off CH1, CH2, and CH4 displays together
+uv run yokogawa.py channel off -c 1 2 4
 ```
 
-### 2. 读取平均值 (mean)
+### 2. Read Mean value (mean)
 
-读取指定通道的 Mean (Average) 测量值。
+Reads the current Mean (Average) measurement value for the selected channel.
 
-**语法**：
+**Syntax**:
 ```bash
 # Windows
 uv run yokogawa.py mean [-c CHANNEL] [-v/--verbose]
@@ -122,33 +119,26 @@ uv run yokogawa.py mean [-c CHANNEL] [-v/--verbose]
 uv run yokogawa_pyvisa.py mean [-c CHANNEL] [-v/--verbose]
 ```
 
-**参数**：
-*   `-c, --channel`: 通道号 (1-4)，默认为 1（超出范围会直接报参数错误）。
-*   `-v, --verbose`: 详细输出模式。如果添加此参数，将显示连接日志和完整的 "CHx Mean = ..." 格式结果。
-*   **(默认行为)**: 默认为干净模式，仅输出数值结果（保留三位小数，单位为 **mA** 或 **mV**）或 `NaN`/`Error`，不显示任何其他日志。
-*   注意：`mean` 只负责读取，不会自动开启通道或初始化测量。首次使用建议先执行 `channel on`。
+**Arguments**:
+*   `-c, --channel`: channel number 1-4; default is 1. Out-of-range values fail fast.
+*   `-v, --verbose`: print connection logs and the full `CHx Mean = ...` style output.
+*   Default behavior: clean mode. Only prints the numeric result (3 decimal places, in **mA** or **mV**) or `NaN`/`Error`.
+*   Note: `mean` only reads the current value. It does not enable a channel or initialize Mean automatically. If Mean is not configured yet, enable it on the front panel first.
 
-**示例**：
-
+**Examples**:
 ```bash
-# 先开启通道并初始化测量（推荐）
-uv run yokogawa.py channel on -c 1
+# If Mean is not configured yet, enable it on the front panel first
 
-# 默认模式：仅输出数值（推荐用于脚本集成）
+# Clean mode: output numeric value only
 uv run yokogawa.py mean -c 1
-# 输出示例: 12500.000 (代表 12.5 A 或 12.5 V)
+# Example output: 12500.000
 
-# 详细模式：显示过程日志
+# Verbose mode: show connection logs and formatted result
 uv run yokogawa.py mean -c 2 -v
-# 输出示例:
-# ------------------------------
-# 连接方式: USBTMC (Serial: 90Y701585)
-# ...
-# [结果] CH2 Mean = 12500.000 (mUnit)
-# ...
 ```
 
-### 3. 屏幕截图 (shot)
+### 3. Screenshot (shot)
+
 
 获取当前示波器屏幕画面并保存为 PNG 图片。执行过程中会自动暂停示波器，截图完成后恢复运行。
 

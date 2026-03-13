@@ -13,6 +13,46 @@ except ImportError:
 # 如果不输入参数，默认使用的 USB 序列号
 DEFAULT_USB_SERIAL = "90Y701585"
 
+
+def _dedupe_channels(channels):
+    unique_channels = []
+    for channel in channels:
+        if channel not in unique_channels:
+            unique_channels.append(channel)
+    return unique_channels
+
+
+def _parse_channel_values(values):
+    channels = []
+    for value in values:
+        for part in str(value).split(","):
+            part = part.strip()
+            if not part:
+                raise ValueError("通道参数不能为空")
+
+            try:
+                channel = int(part)
+            except ValueError as exc:
+                raise ValueError(f"无效通道: {part}") from exc
+
+            if channel not in (1, 2, 3, 4):
+                raise ValueError(f"通道号超出范围: {channel} (仅支持 1-4)")
+
+            channels.append(channel)
+
+    return _dedupe_channels(channels)
+
+
+class ChannelListAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        try:
+            parsed_channels = _parse_channel_values(values)
+        except ValueError as exc:
+            parser.error(str(exc))
+
+        current_channels = getattr(namespace, self.dest, None) or []
+        setattr(namespace, self.dest, _dedupe_channels(current_channels + parsed_channels))
+
 class ScopeController:
     def __init__(self, args):
         self.tmctl = tmctlLib.TMCTL()
@@ -122,30 +162,30 @@ class ScopeController:
         return success
 
     def cmd_channel_set(self):
-        """设置通道开关状态；开启时初始化 Mean 测量"""
-        channel = self.args.channel
+        """Set channel display state."""
+        channels = self.args.channel or [1]
         state = self.args.state
 
         try:
             self.send(":COMMunicate:HEADer OFF")
+            channel_text = ", ".join(f"CH{channel}" for channel in channels)
 
             if state == "on":
-                print(f"正在开启 Channel {channel} 并初始化 Mean 测量...")
-                self.send(f":CHANnel{channel}:DISPlay ON")
-                self.send(f":MEASure:CHANnel{channel}:AVERage:STATe ON")
-                self.send(":MEASure:MODE ON")
+                print(f"Turning on {channel_text}...")
+                for channel in channels:
+                    self.send(f":CHANnel{channel}:DISPlay ON")
                 self.query("*OPC?")
-                print(f"Channel {channel} 已开启，Mean 测量已初始化。")
+                print(f"{channel_text} enabled.")
             else:
-                print(f"正在关闭 Channel {channel} ...")
-                self.send(f":MEASure:CHANnel{channel}:AVERage:STATe OFF")
-                self.send(f":CHANnel{channel}:DISPlay OFF")
+                print(f"Turning off {channel_text}...")
+                for channel in channels:
+                    self.send(f":CHANnel{channel}:DISPlay OFF")
                 self.query("*OPC?")
-                print(f"Channel {channel} 已关闭。")
+                print(f"{channel_text} disabled.")
 
             return True
         except Exception as e:
-            print(f"通道状态设置失败: {e}")
+            print(f"Failed to set channel state: {e}")
             return False
 
     def cmd_get_screenshot(self):
@@ -265,9 +305,16 @@ def main():
     parser_mean.add_argument("--clean", action="store_true", help="[已废弃] 默认即为干净模式，保留此参数仅为兼容性")
 
     # 子命令: channel (通道开关，兼容 channel-on 别名)
-    parser_channel = subparsers.add_parser("channel", aliases=["channel-on"], help="设置通道开关状态；on 时初始化 Mean 测量")
+    parser_channel = subparsers.add_parser("channel", aliases=["channel-on"], help="Set channel display on/off (panel-like by default)")
     parser_channel.add_argument("state", nargs="?", default="on", choices=["on", "off"], help="通道状态: on 开启, off 关闭 (默认: on)")
-    parser_channel.add_argument("-c", "--channel", type=int, choices=[1, 2, 3, 4], default=1, help="通道号 (1-4, 默认 1)")
+    parser_channel.add_argument(
+        "-c",
+        "--channel",
+        nargs="+",
+        action=ChannelListAction,
+        default=None,
+        help="Channel number(s) (1-4, default: 1). Supports multiple values, e.g. -c 1 2 or -c 1,2,4",
+    )
 
     # 子命令: shot (截图)
     parser_shot = subparsers.add_parser("shot", help="获取屏幕截图")
